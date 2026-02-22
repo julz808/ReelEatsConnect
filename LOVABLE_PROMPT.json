@@ -1,0 +1,425 @@
+{
+  "project_name": "ReelEats Creator Portal",
+  "project_description": "A B2B marketplace platform connecting food content creators with restaurants, cafes, and bars for collaboration opportunities. This is separate from the main ReelEats B2C app.",
+
+  "platform_context": {
+    "what_is_reeleats": "ReelEats is a food discovery platform with two main products: (1) A B2C iOS app where users discover restaurants through short-form video content from food creators, and (2) This Creator Portal - a B2B marketplace that facilitates the collaborations that power the content on the B2C app.",
+
+    "platform_purpose": "The Creator Portal is the engine that drives content creation for the ReelEats ecosystem. It connects food content creators (TikTok/Instagram influencers) with restaurants, cafes, and bars who want to be featured in their content. When matches are made through this platform, creators visit the venues, create content, and that content appears on the main ReelEats B2C app for consumers to discover.",
+
+    "how_it_fits_in_the_architecture": {
+      "existing_website": "The main ReelEats marketing website (reeleats.com) currently has two key sections: 'For Venues' and 'For Creators', explaining the value proposition for each audience.",
+
+      "current_state": "Currently, both sections have an 'Apply to Join' button that links to a generic contact form. This creates friction and manual work.",
+
+      "new_state_with_this_platform": "Once this Creator Portal is built, the 'Apply to Join' buttons should link directly to this new platform instead of the contact form. Specifically:",
+
+      "integration_points": [
+        "FOR CREATORS section 'Apply to Join' button → Link to Creator Portal signup page (/auth/signup/creator)",
+        "FOR VENUES section 'Apply to Join' button → Link to Creator Portal signup page (/auth/signup/restaurant)",
+        "Both sections can optionally also link to the Creator Portal landing page (/) which has its own CTAs to sign up"
+      ],
+
+      "user_journey": "Consumer uses ReelEats iOS app to discover food → Sees video from creator → Wants to become a creator themselves or is a venue owner who wants to be featured → Clicks 'Apply to Join' on main website → Lands on Creator Portal → Signs up → Creates profile → Browses and matches → Creates content → Content appears on B2C app. This completes the ecosystem loop."
+    },
+
+    "why_separate_platform": "This is a separate platform (not part of the iOS app or main marketing site) because: (1) It's a B2B marketplace with completely different functionality than the B2C discovery app, (2) Creators and venues need desktop-friendly tools for browsing profiles, managing connections, and communications, (3) It allows for independent scaling and feature development, (4) It connects to its own database tables in Supabase while sharing the same Supabase project as the main products.",
+
+    "key_differentiators": "Unlike the iOS app which is consumer-facing and focused on restaurant discovery through video, this Creator Portal is B2B-focused, facilitating professional collaborations between two business entities (creators as businesses and venues as businesses). It needs to be clean, professional, and efficient - not flashy consumer app vibes."
+  },
+
+  "tech_stack": {
+    "framework": "React with Next.js (App Router)",
+    "styling": "Tailwind CSS",
+    "ui_components": "shadcn/ui with Radix UI primitives",
+    "database": "Supabase (PostgreSQL) - IMPORTANT: Connect to existing Supabase project",
+    "authentication": "Supabase Auth with email/password and Google OAuth",
+    "hosting": "Vercel"
+  },
+
+  "design_system": {
+    "brand_name": "ReelEats Creator Portal",
+    "primary_color": "#fd7158",
+    "primary_color_name": "Coral/salmon pink",
+    "fonts": {
+      "headings": "Poppins (600, 700 weights)",
+      "body": "Inter"
+    },
+    "design_style": "Clean, modern, professional B2B marketplace aesthetic. Sleek and approachable.",
+    "logo": "Use 'ReelEats' text branding in coral color for now"
+  },
+
+  "user_types": [
+    {
+      "type": "creator",
+      "description": "Food content creators (TikTok, Instagram influencers)",
+      "profile_fields": [
+        "Name",
+        "City/Suburb (Melbourne-based)",
+        "Content niches (multi-select: Fine Dining, Cafes, Brunch, Bars, Asian Cuisine, Italian, Mexican, Desserts, Vegan, Street Food, Coffee, Pizza, Healthy Eating, Cocktails)",
+        "TikTok URL",
+        "Instagram URL",
+        "Media Kit URL",
+        "Contact Email",
+        "Contact Number",
+        "Profile Image"
+      ]
+    },
+    {
+      "type": "restaurant",
+      "description": "Restaurants, cafes, and bars looking for creators",
+      "profile_fields": [
+        "Venue Name",
+        "Location/Suburb",
+        "Instagram Handle",
+        "Contact Name",
+        "Contact Email",
+        "Contact Number",
+        "Venue Category (restaurant/cafe/bar)",
+        "Profile Image"
+      ]
+    }
+  ],
+
+  "authentication_flow": {
+    "note": "Separate login and signup flows for creators vs restaurants",
+    "pages": [
+      "/auth/login/creator",
+      "/auth/login/restaurant",
+      "/auth/signup/creator",
+      "/auth/signup/restaurant"
+    ],
+    "features": [
+      "Email/password authentication",
+      "Google OAuth option",
+      "After creator signup, redirect to /creator/profile?onboarding=true",
+      "After restaurant signup, redirect to /restaurant/profile?onboarding=true",
+      "After login, redirect to respective dashboard"
+    ]
+  },
+
+  "core_feature": {
+    "name": "Express Interest Matching System",
+    "description": "SIMPLIFIED SYSTEM - Users can express interest in each other with a single click. When both sides express interest, it becomes a mutual match.",
+    "how_it_works": [
+      "Creators browse restaurants and can click 'Express Interest' button",
+      "Restaurants browse creators and can click 'Express Interest' button",
+      "When one side expresses interest, a connection record is created with is_mutual: false",
+      "When the other side also expresses interest, the connection is marked as is_mutual: true",
+      "Users see their connections page with two sections: 'Mutual Matches' (highlighted in green with heart icons) and 'Pending Connections'",
+      "For mutual matches, full contact information is displayed so users can reach out directly"
+    ],
+    "note": "NO complex interest forms, NO inbox system. Just simple express interest and matching."
+  },
+
+  "database_schema": {
+    "note": "Connect to your existing Supabase project and create these tables",
+    "tables": [
+      {
+        "name": "user_roles",
+        "fields": [
+          "id (uuid, primary key)",
+          "user_id (uuid, references auth.users)",
+          "role (text: 'creator' or 'restaurant')",
+          "created_at (timestamp)"
+        ]
+      },
+      {
+        "name": "creator_profiles",
+        "fields": [
+          "id (uuid, primary key)",
+          "user_id (uuid, references auth.users)",
+          "name (text)",
+          "city_suburb (text, nullable)",
+          "content_niches (text[], nullable)",
+          "tiktok_url (text, nullable)",
+          "instagram_url (text, nullable)",
+          "media_kit_url (text, nullable)",
+          "contact_email (text)",
+          "contact_number (text, nullable)",
+          "profile_image_url (text, nullable)",
+          "created_at (timestamp)",
+          "updated_at (timestamp)"
+        ]
+      },
+      {
+        "name": "restaurant_profiles",
+        "fields": [
+          "id (uuid, primary key)",
+          "user_id (uuid, references auth.users)",
+          "venue_name (text)",
+          "location_suburb (text, nullable)",
+          "instagram_handle (text, nullable)",
+          "contact_name (text)",
+          "contact_email (text)",
+          "contact_number (text)",
+          "venue_category (text: 'restaurant', 'cafe', or 'bar', nullable)",
+          "profile_image_url (text, nullable)",
+          "created_at (timestamp)",
+          "updated_at (timestamp)"
+        ]
+      },
+      {
+        "name": "connections",
+        "fields": [
+          "id (uuid, primary key)",
+          "from_user_id (uuid, references auth.users)",
+          "to_user_id (uuid, references auth.users)",
+          "from_type (text: 'creator' or 'restaurant')",
+          "to_type (text: 'creator' or 'restaurant')",
+          "is_mutual (boolean, default false)",
+          "created_at (timestamp)"
+        ],
+        "note": "When creating a connection, check if reverse connection exists and mark both as is_mutual: true"
+      }
+    ]
+  },
+
+  "pages_and_routes": {
+    "public_pages": [
+      {
+        "route": "/",
+        "name": "Landing Page",
+        "sections": [
+          "Header with logo, 'How It Works' and 'Login' links",
+          "Hero section: Large heading 'Connect Creators & Restaurants' with coral 'Creators' text. Tagline: 'The marketplace where food content creators and restaurants come together to create amazing collaborations.'",
+          "Two CTA buttons: 'I'm a Creator' (primary coral button) and 'I'm a Restaurant' (outline button)",
+          "How It Works section with two columns (For Creators / For Restaurants), each with 3 numbered steps in cards",
+          "CTA section with coral background calling users to sign up",
+          "Footer with copyright"
+        ]
+      },
+      {
+        "route": "/how-it-works",
+        "name": "How It Works Page",
+        "content": "Detailed explanation of the platform for both user types"
+      }
+    ],
+
+    "creator_pages": [
+      {
+        "route": "/creator/dashboard",
+        "name": "Creator Dashboard",
+        "components": [
+          "Welcome message with user name",
+          "3 stat cards: Total Venues Available, Connections (with X mutual matches), Profile Views (mock: 127)",
+          "Recent Connections section showing latest 3 connections with mutual match indicators (green badge + heart icon for matches, gray badge for pending)",
+          "Featured Restaurants section showing 3 restaurant cards",
+          "All sections have 'View All' / 'Browse All' links"
+        ]
+      },
+      {
+        "route": "/creator/browse-restaurants",
+        "name": "Browse Restaurants",
+        "features": [
+          "Search bar (search by name or location)",
+          "Filter by venue category (restaurant/cafe/bar)",
+          "Filter by location/suburb (Melbourne suburbs: Melbourne CBD, Fitzroy, Collingwood, Carlton, Brunswick, Richmond, South Yarra, St Kilda, Prahran, Northcote)",
+          "Grid of restaurant cards with image, name, location, category badge",
+          "Each card has 'Express Interest' button with heart icon in coral color",
+          "Show count: 'Showing X of Y restaurants'"
+        ]
+      },
+      {
+        "route": "/creator/connections",
+        "name": "Connections",
+        "layout": [
+          "Two sections: 'Mutual Matches' and 'Pending Connections'",
+          "Mutual Matches: Green 'It's a Match!' badge, heart icons, green highlight box saying 'You both expressed interest! Time to reach out and start planning your collaboration.' with match date",
+          "Show full contact info for matches: Contact Name, Email (clickable mailto:), Phone (clickable tel:), Instagram link",
+          "Action buttons: 'Send Email' (primary) and 'Call' (outline)",
+          "Pending: Gray 'Interest Sent' badge with text 'You expressed interest on [date]. They'll be notified and can express interest back to create a match!'",
+          "Empty state: Heart icon, 'No Connections Yet' heading, 'Start browsing restaurants and express interest to make connections!' with button to Browse Restaurants"
+        ]
+      },
+      {
+        "route": "/creator/profile",
+        "name": "Creator Profile",
+        "features": [
+          "Edit/View mode toggle",
+          "Profile image upload (connects to Supabase Storage)",
+          "All creator profile fields editable",
+          "Content niches: multi-select checkboxes",
+          "Save button",
+          "Show onboarding message if ?onboarding=true query param: 'Welcome! Please complete your profile to start connecting with restaurants.'"
+        ]
+      }
+    ],
+
+    "restaurant_pages": [
+      {
+        "route": "/restaurant/dashboard",
+        "name": "Restaurant Dashboard",
+        "components": [
+          "Welcome message with venue name",
+          "3 stat cards: Total Creators Available, Connections (with X mutual matches), Profile Views (mock: 89)",
+          "Recent Connections section showing latest 3 connections with mutual match indicators",
+          "Featured Creators section showing 3 creator cards with their niches as badges",
+          "All sections have 'View All' / 'Browse All' links"
+        ]
+      },
+      {
+        "route": "/restaurant/browse-creators",
+        "name": "Browse Creators",
+        "features": [
+          "Search bar (search by name or location)",
+          "Filter by content niche",
+          "Filter by location/suburb",
+          "Grid of creator cards with profile image (circular), name, location, content niche badges",
+          "Show Instagram and Media Kit links if available",
+          "Each card has 'Express Interest' button with heart icon",
+          "Show count: 'Showing X of Y creators'"
+        ]
+      },
+      {
+        "route": "/restaurant/connections",
+        "name": "Connections",
+        "layout": [
+          "Same structure as creator connections but showing creator info instead",
+          "Mutual Matches show: Creator email, phone, Instagram, TikTok, Media Kit links",
+          "Creator profile images are circular (not square)",
+          "Show creator's content niches as small badges"
+        ]
+      },
+      {
+        "route": "/restaurant/profile",
+        "name": "Restaurant Profile",
+        "features": [
+          "Edit/View mode toggle",
+          "Profile image upload (connects to Supabase Storage)",
+          "All restaurant profile fields editable",
+          "Venue category: radio buttons or select",
+          "Save button",
+          "Show onboarding message if ?onboarding=true"
+        ]
+      }
+    ]
+  },
+
+  "navigation": {
+    "creator_nav_links": [
+      "Dashboard",
+      "Browse Restaurants",
+      "Connections",
+      "My Profile"
+    ],
+    "restaurant_nav_links": [
+      "Dashboard",
+      "Browse Creators",
+      "Connections",
+      "My Venue"
+    ],
+    "nav_features": [
+      "Logo on left links to home",
+      "Nav links in center",
+      "User avatar dropdown on right with: Profile, Settings, Log out",
+      "Highlight active page in coral color",
+      "Mobile responsive with horizontal scroll on small screens"
+    ]
+  },
+
+  "ui_components_needed": [
+    "Button (primary coral, outline, ghost variants)",
+    "Input (text, email, tel, url)",
+    "Card with CardHeader, CardTitle, CardDescription, CardContent",
+    "Badge (default coral, secondary gray, outline, custom green for matches)",
+    "Avatar with AvatarImage and AvatarFallback",
+    "DropdownMenu",
+    "Select for filters",
+    "Checkbox for multi-select niches",
+    "Image upload component with Supabase Storage integration",
+    "Icons: Heart (regular and filled), MapPin, Instagram, TikTok, Link, Mail, Phone, User, Settings, LogOut, TrendingUp, Users, ArrowRight, Search, Calendar"
+  ],
+
+  "key_functionality": {
+    "express_interest_logic": [
+      "When user clicks 'Express Interest' on a profile:",
+      "1. Check if connection already exists (from current user to target user)",
+      "2. If yes, show 'Interest Already Sent' or similar",
+      "3. If no, create new connection record with from_user_id, to_user_id, from_type, to_type, is_mutual: false",
+      "4. Then check if reverse connection exists (from target to current user)",
+      "5. If reverse connection exists, update BOTH connection records to set is_mutual: true",
+      "6. Show success message and update UI"
+    ],
+    "profile_updates": [
+      "All profile edits save to respective tables",
+      "Image uploads go to Supabase Storage buckets: 'creator-images' and 'restaurant-images'",
+      "Profile image URLs stored in profile_image_url field"
+    ],
+    "auth_middleware": [
+      "Protected routes check if user is authenticated",
+      "Check user_roles table to ensure creator can only access /creator/* routes",
+      "Check user_roles to ensure restaurant can only access /restaurant/* routes",
+      "Redirect to appropriate login if not authenticated"
+    ]
+  },
+
+  "mock_data_for_development": {
+    "note": "Create mock data for initial development/testing",
+    "mock_creators": "6 sample creators with diverse content niches and Melbourne suburbs",
+    "mock_restaurants": "8 sample restaurants/cafes/bars across Melbourne",
+    "mock_connections": "4 sample connections, 2 mutual matches and 2 pending",
+    "use_unsplash_images": true
+  },
+
+  "color_palette": {
+    "primary": "#fd7158 (coral)",
+    "primary_hover": "#fc5a3e",
+    "secondary": "#f3f4f6 (light gray)",
+    "background": "#ffffff (white)",
+    "background_alt": "#f9fafb (off-white)",
+    "text_primary": "#1a1a1a (dark gray)",
+    "text_secondary": "#6b7280 (muted gray)",
+    "border": "#e5e7eb (light border)",
+    "success": "#10b981 (green for matches)",
+    "success_bg": "#d1fae5 (light green background)",
+    "destructive": "#ef4444 (red)"
+  },
+
+  "styling_notes": [
+    "Use rounded-lg for cards and buttons (8px radius)",
+    "Use rounded-full for creator profile images and avatar",
+    "Use rounded-lg for restaurant/venue images",
+    "Card shadows: hover:shadow-lg transition",
+    "Smooth transitions on all interactive elements",
+    "Responsive grid layouts: 1 col mobile, 2 cols tablet, 3 cols desktop",
+    "Container max-width with padding on sides",
+    "Sticky navigation bar at top with backdrop blur"
+  ],
+
+  "important_notes": [
+    "CONNECT TO EXISTING SUPABASE PROJECT - Do not create new Supabase project",
+    "Use the Supabase connection that already exists in the Lovable project",
+    "Create the database tables in the existing Supabase database",
+    "Set up Supabase Storage buckets for image uploads",
+    "Enable RLS (Row Level Security) policies appropriately",
+    "AFTER BUILDING: Update the main ReelEats marketing website - change the 'Apply to Join' buttons in the 'For Creators' and 'For Venues' sections to link to this Creator Portal's signup pages instead of the contact form",
+    "This is MVP - keep it simple, no complex features yet",
+    "NO interest form inbox or messaging system - just simple express interest and matching",
+    "Focus on clean, professional B2B marketplace aesthetic (not flashy consumer app)",
+    "All Melbourne suburbs and content niches should be predefined arrays",
+    "Make sure to handle edge cases: empty states, loading states, error states",
+    "This platform is the engine that powers content creation for the ReelEats B2C ecosystem"
+  ],
+
+  "deployment": {
+    "platform": "Vercel (should be automatic with Lovable)",
+    "environment_variables": [
+      "NEXT_PUBLIC_SUPABASE_URL",
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+      "SUPABASE_SERVICE_ROLE_KEY (for admin operations)"
+    ]
+  },
+
+  "next_steps_after_mvp": [
+    "Add email notifications for new matches",
+    "Add search filters for restaurant cuisine types",
+    "Add creator follower count fields",
+    "Add campaign posting system for restaurants",
+    "Add analytics dashboard",
+    "Add messaging system between matched users",
+    "Add payment/subscription tiers"
+  ],
+
+  "final_instruction": "Build this entire ReelEats Creator Portal platform as described above. IMPORTANT CONTEXT: This platform sits in the ReelEats ecosystem as the B2B marketplace that powers content creation for the B2C app. The main ReelEats website currently has 'Apply to Join' buttons in the 'For Creators' and 'For Venues' sections that link to a contact form - once you build this, those buttons should link to /auth/signup/creator and /auth/signup/restaurant respectively instead. Use the design system specified (coral #fd7158 primary color, Poppins + Inter fonts). Implement the simplified Express Interest matching system (NOT complex forms or inbox). Create all pages for both creator and restaurant user types. Connect to the existing Supabase project that's already configured in this Lovable project - do not create a new Supabase project. Make it clean, modern, and professional B2B marketplace aesthetic. Focus on the MVP features only. Start with the landing page, then authentication, then the dashboards, browse pages, connections pages, and profile pages. This platform completes the ecosystem loop: consumers discover → want to participate → sign up here → match and create content → content appears in B2C app."
+}
